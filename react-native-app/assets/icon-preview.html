@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Wallet Manager - App Icon</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: #f0f0f0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .icon-container {
+            width: 512px;
+            height: 512px;
+            background: #F7F7F3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .instructions {
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-left: 4px solid #376B4B;
+        }
+        .download-btn {
+            background: #376B4B;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 20px;
+        }
+        .download-btn:hover {
+            background: #2d5a3f;
+        }
+    </style>
+</head>
+<body>
+    <h1>Wallet Manager - App Icon</h1>
+    
+    <div class="icon-container" id="icon">
+        <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+            <!-- Wallet Icon -->
+            <g transform="translate(200, 200)">
+                <!-- Wallet body -->
+                <rect x="-140" y="-90" width="280" height="180" fill="none" stroke="#376B4B" stroke-width="18" rx="0"/>
+                
+                <!-- Wallet flap -->
+                <path d="M -140 -90 L -140 -120 Q -140 -135 -125 -135 L 125 -135 Q 140 -135 140 -120 L 140 -90" 
+                      fill="none" stroke="#376B4B" stroke-width="18"/>
+                
+                <!-- Card slot -->
+                <rect x="-110" y="-45" width="220" height="60" fill="#376B4B" opacity="0.15"/>
+                
+                <!-- Money symbol -->
+                <text x="0" y="15" font-family="Arial, sans-serif" font-size="60" font-weight="bold" 
+                      fill="#376B4B" text-anchor="middle">Rs</text>
+                
+                <!-- Decorative lines -->
+                <line x1="-110" y1="45" x2="110" y2="45" stroke="#376B4B" stroke-width="6" opacity="0.3"/>
+                <line x1="-110" y1="65" x2="80" y2="65" stroke="#376B4B" stroke-width="6" opacity="0.3"/>
+            </g>
+        </svg>
+    </div>
+
+    <button class="download-btn" onclick="downloadIcon()">Download Icon (Right-click > Save Image As)</button>
+
+    <div class="instructions">
+        <h2>How to Use This Icon:</h2>
+        <ol>
+            <li>Right-click on the icon above</li>
+            <li>Select "Save image as..."</li>
+            <li>Name it: <strong>icon.png</strong></li>
+            <li>Save it to: <code>react-native-app/assets/icon.png</code></li>
+            <li>Also save as <strong>adaptive-icon.png</strong> for Android</li>
+        </ol>
+        
+        <h3>Icon Specifications:</h3>
+        <ul>
+            <li>Size: 1024x1024 pixels (recommended)</li>
+            <li>Format: PNG</li>
+            <li>Background: #F7F7F3 (warm off-white)</li>
+            <li>Foreground: #376B4B (forest green)</li>
+            <li>Style: Flat, minimal, no rounded corners</li>
+        </ul>
+
+        <h3>Alternative: Create Your Own</h3>
+        <p>Use these free tools:</p>
+        <ul>
+            <li><a href="https://figma.com" target="_blank">Figma</a> - Professional design tool</li>
+            <li><a href="https://canva.com" target="_blank">Canva</a> - Easy online design</li>
+            <li><a href="https://photopea.com" target="_blank">Photopea</a> - Free Photoshop alternative</li>
+        </ul>
+    </div>
+
+    <script>
+        function downloadIcon() {
+            alert('Right-click on the icon image above and select "Save image as..." to download it.\n\nSave as: icon.png\nLocation: react-native-app/assets/');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Wallet Manager - Icon Generator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #F7F7F3;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { color: #20231F; margin-bottom: 10px; }
+        .subtitle { color: #777B75; margin-bottom: 30px; }
+        .preview-container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .preview-box {
+            text-align: center;
+        }
+        .preview-box canvas {
+            border: 1px solid #E4E5DF;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .preview-label {
+            font-size: 14px;
+            color: #777B75;
+        }
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        button {
+            background: #376B4B;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        button:hover { background: #2d5a3f; }
+        button.secondary {
+            background: white;
+            color: #20231F;
+            border: 1px solid #E4E5DF;
+        }
+        .instructions {
+            max-width: 600px;
+            background: white;
+            padding: 24px;
+            margin-top: 20px;
+            border: 1px solid #E4E5DF;
+        }
+        .instructions h2 {
+            color: #20231F;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .instructions ol {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+        .instructions code {
+            background: #EFEFE9;
+            padding: 2px 6px;
+            font-family: monospace;
+        }
+        .color-box {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+            margin-right: 5px;
+            border: 1px solid #E4E5DF;
+        }
+    </style>
+</head>
+<body>
+    <h1>Wallet Manager - Icon Generator</h1>
+    <p class="subtitle">Click "Download Icon" to save the app icon</p>
+
+    <div class="preview-container">
+        <div class="preview-box">
+            <canvas id="icon-large" width="256" height="256"></canvas>
+            <div class="preview-label">App Icon (256x256 preview)</div>
+        </div>
+        <div class="preview-box">
+            <canvas id="icon-small" width="64" height="64"></canvas>
+            <div class="preview-label">Small Preview</div>
+        </div>
+    </div>
+
+    <div class="buttons">
+        <button onclick="downloadIcon(1024, 'icon.png')">Download Icon (1024x1024)</button>
+        <button onclick="downloadIcon(1024, 'adaptive-icon.png')" class="secondary">Download Adaptive Icon</button>
+        <button onclick="downloadSplash()" class="secondary">Download Splash Screen</button>
+    </div>
+
+    <div class="instructions">
+        <h2>Installation Instructions:</h2>
+        <ol>
+            <li>Click "Download Icon" button above</li>
+            <li>Save the file as <code>icon.png</code></li>
+            <li>Move it to: <code>react-native-app/assets/icon.png</code></li>
+            <li>Click "Download Adaptive Icon"</li>
+            <li>Save as <code>adaptive-icon.png</code></li>
+            <li>Move to: <code>react-native-app/assets/adaptive-icon.png</code></li>
+            <li>Click "Download Splash Screen"</li>
+            <li>Save as <code>splash.png</code></li>
+            <li>Move to: <code>react-native-app/assets/splash.png</code></li>
+        </ol>
+
+        <h2 style="margin-top: 20px;">Color Scheme:</h2>
+        <p><span class="color-box" style="background: #376B4B;"></span> <strong>#376B4B</strong> - Forest Green (Primary)</p>
+        <p><span class="color-box" style="background: #F7F7F3;"></span> <strong>#F7F7F3</strong> - Warm Off-White (Background)</p>
+        <p><span class="color-box" style="background: #20231F;"></span> <strong>#20231F</strong> - Near Black (Text)</p>
+    </div>
+
+    <script>
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const scale = size / 1024;
+            
+            // Clear
+            ctx.clearRect(0, 0, size, size);
+            
+            // Background
+            ctx.fillStyle = '#F7F7F3';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Center
+            ctx.save();
+            ctx.translate(size / 2, size / 2);
+            ctx.scale(scale, scale);
+            
+            // Wallet body
+            ctx.strokeStyle = '#376B4B';
+            ctx.lineWidth = 24;
+            ctx.strokeRect(-180, -120, 360, 240);
+            
+            // Wallet flap
+            ctx.beginPath();
+            ctx.moveTo(-180, -120);
+            ctx.lineTo(-180, -160);
+            ctx.quadraticCurveTo(-180, -180, -160, -180);
+            ctx.lineTo(160, -180);
+            ctx.quadraticCurveTo(180, -180, 180, -160);
+            ctx.lineTo(180, -120);
+            ctx.stroke();
+            
+            // Card slot
+            ctx.fillStyle = 'rgba(55, 107, 75, 0.15)';
+            ctx.fillRect(-140, -60, 280, 80);
+            
+            // Rs text
+            ctx.fillStyle = '#376B4B';
+            ctx.font = 'bold 80px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Rs', 0, 20);
+            
+            // Decorative lines
+            ctx.strokeStyle = 'rgba(55, 107, 75, 0.3)';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(-140, 60);
+            ctx.lineTo(140, 60);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(-140, 90);
+            ctx.lineTo(100, 90);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
+        function drawSplash(canvas) {
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Background
+            ctx.fillStyle = '#F7F7F3';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Center icon (smaller)
+            ctx.save();
+            ctx.translate(width / 2, height / 2 - 100);
+            ctx.scale(0.6, 0.6);
+            
+            // Wallet body
+            ctx.strokeStyle = '#376B4B';
+            ctx.lineWidth = 24;
+            ctx.strokeRect(-180, -120, 360, 240);
+            
+            // Wallet flap
+            ctx.beginPath();
+            ctx.moveTo(-180, -120);
+            ctx.lineTo(-180, -160);
+            ctx.quadraticCurveTo(-180, -180, -160, -180);
+            ctx.lineTo(160, -180);
+            ctx.quadraticCurveTo(180, -180, 180, -160);
+            ctx.lineTo(180, -120);
+            ctx.stroke();
+            
+            // Card slot
+            ctx.fillStyle = 'rgba(55, 107, 75, 0.15)';
+            ctx.fillRect(-140, -60, 280, 80);
+            
+            // Rs text
+            ctx.fillStyle = '#376B4B';
+            ctx.font = 'bold 80px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Rs', 0, 20);
+            
+            ctx.restore();
+            
+            // App name
+            ctx.fillStyle = '#20231F';
+            ctx.font = 'bold 48px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Wallet Manager', width / 2, height / 2 + 150);
+            
+            // Tagline
+            ctx.fillStyle = '#777B75';
+            ctx.font = '24px Arial, sans-serif';
+            ctx.fillText('Personal Finance Tracker', width / 2, height / 2 + 200);
+        }
+
+        function downloadIcon(size, filename) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            drawIcon(canvas, size);
+            
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function downloadSplash() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1080;
+            canvas.height = 1920;
+            drawSplash(canvas);
+            
+            const link = document.createElement('a');
+            link.download = 'splash.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Draw previews
+        drawIcon(document.getElementById('icon-large'), 256);
+        drawIcon(document.getElementById('icon-small'), 64);
+    </script>
+</body>
+</html>
