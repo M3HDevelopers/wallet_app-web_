@@ -1,38 +1,21 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, StatusBar as RNStatusBar, Platform, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { calculateBalance, getTransactions, getSettings } from '../db/database';
 import { formatCurrency } from '../utils/currency';
 import { getCurrentGreeting, getCurrentDateFormatted, formatDate } from '../utils/date';
 
-export default function DashboardScreen({ navigation, onLock }: any) {
-  const [balance, setBalance] = useState<any>(null);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [hideBalance, setHideBalance] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+// Memoized components for performance
+const StatCard = React.memo(({ label, value, color }: { label: string; value: number; color: string }) => (
+  <View style={statStyles.card}>
+    <Text style={statStyles.label}>{label}</Text>
+    <Text style={[statStyles.value, { color }]}>{formatCurrency(value)}</Text>
+  </View>
+));
 
-  const loadData = useCallback(async () => {
-    const [bal, txs, settings] = await Promise.all([
-      calculateBalance(),
-      getTransactions(),
-      getSettings(),
-    ]);
-    setBalance(bal);
-    setTransactions(txs.slice(0, 6));
-    setHideBalance(settings.hide_balance === 'true');
-  }, []);
-
-  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadData();
-    setRefreshing(false);
-  };
-
-  if (!balance) return null;
-
+const TxRow = React.memo(({ tx, onPress }: { tx: any; onPress: () => void }) => {
+  const isOut = tx.transaction_type === 'expense' || tx.transaction_type === 'repayment';
   const getTxLabel = (type: string) => {
     const map: Record<string, string> = {
       earned_income: 'Earned', gift_allowance: 'Gift', family_money: 'Family',
@@ -42,183 +25,236 @@ export default function DashboardScreen({ navigation, onLock }: any) {
     return map[type] || 'Tx';
   };
 
-  const isOutgoing = (type: string) => type === 'expense' || type === 'repayment';
+  return (
+    <TouchableOpacity
+      style={styles.txRow}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={[styles.txIcon, { backgroundColor: isOut ? '#B84C4315' : '#34764A15' }]}>
+        <Text style={[styles.txIconText, { color: isOut ? '#B84C43' : '#34764A' }]}>
+          {isOut ? '↓' : '↑'}
+        </Text>
+      </View>
+      <View style={styles.txInfo}>
+        <Text style={styles.txDescription} numberOfLines={1}>{tx.description || getTxLabel(tx.transaction_type)}</Text>
+        <Text style={styles.txMeta}>{getTxLabel(tx.transaction_type)} · {formatDate(tx.transaction_date)}</Text>
+      </View>
+      <Text style={[styles.txAmount, { color: isOut ? '#B84C43' : '#34764A' }]}>
+        {isOut ? '-' : '+'}{formatCurrency(tx.amount)}
+      </Text>
+    </TouchableOpacity>
+  );
+});
+
+export default function DashboardScreen({ navigation, onLock }: any) {
+  const [balance, setBalance] = useState<any>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [hideBalance, setHideBalance] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  const loadData = React.useCallback(async () => {
+    try {
+      const [bal, txs, settings] = await Promise.all([
+        calculateBalance(),
+        getTransactions(),
+        getSettings(),
+      ]);
+      setBalance(bal);
+      setTransactions(txs.slice(0, 6));
+      setHideBalance(settings.hide_balance === 'true');
+      
+      // Fade in animation
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
+  }, [fadeAnim]);
+
+  useFocusEffect(React.useCallback(() => { loadData(); }, [loadData]));
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
+
+  if (!balance) return null;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>{getCurrentGreeting()}</Text>
-          <Text style={styles.date}>{getCurrentDateFormatted()}</Text>
-        </View>
-        <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
-          <Text style={styles.settingsIcon}>⚙</Text>
-        </TouchableOpacity>
+    <View style={styles.container}>
+      {/* Status Bar - Dark overlay for visibility */}
+      <View style={styles.statusBarOverlay}>
+        <RNStatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       </View>
 
-      <ScrollView 
-        style={styles.scroll} 
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#376B4B" />}
-        contentContainerStyle={{ paddingBottom: 100 }}
-      >
-        {/* Balance Card */}
-        <View style={styles.balanceCard}>
-          <View style={styles.balanceHeader}>
-            <Text style={styles.balanceLabel}>CURRENT BALANCE</Text>
-            <TouchableOpacity onPress={() => setHideBalance(!hideBalance)}>
-              <Text style={styles.eyeIcon}>{hideBalance ? '🙈' : '👁'}</Text>
-            </TouchableOpacity>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>{getCurrentGreeting()}</Text>
+            <Text style={styles.date}>{getCurrentDateFormatted()}</Text>
           </View>
-          <Text style={styles.balanceAmount}>
-            {hideBalance ? 'Rs. ••••••' : formatCurrency(balance.current_balance)}
-          </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')} activeOpacity={0.7}>
+            <Text style={styles.settingsIcon}>⚙</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Total Income</Text>
-            <Text style={[styles.statValue, { color: '#34764A' }]}>
-              {formatCurrency(balance.total_income)}
+        <Animated.ScrollView 
+          style={[styles.scroll, { opacity: fadeAnim }]}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#376B4B" />}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Balance Card */}
+          <View style={styles.balanceCard}>
+            <View style={styles.balanceHeader}>
+              <Text style={styles.balanceLabel}>CURRENT BALANCE</Text>
+              <TouchableOpacity onPress={() => setHideBalance(!hideBalance)} activeOpacity={0.7}>
+                <Text style={styles.eyeIcon}>{hideBalance ? '🙈' : '👁'}</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.balanceAmount}>
+              {hideBalance ? 'Rs. ••••••' : formatCurrency(balance.current_balance)}
             </Text>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Total Expenses</Text>
-            <Text style={[styles.statValue, { color: '#B84C43' }]}>
-              {formatCurrency(balance.total_expenses)}
-            </Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Borrowed</Text>
-            <Text style={styles.statValue}>{formatCurrency(balance.total_borrowed)}</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Outstanding</Text>
-            <Text style={[styles.statValue, { color: '#B84C43' }]}>
-              {formatCurrency(balance.outstanding_debt)}
-            </Text>
-          </View>
-        </View>
 
-        {/* Quick Actions */}
-        <Text style={styles.sectionTitle}>QUICK ACTIONS</Text>
-        <View style={styles.quickActions}>
-          {[
-            { label: 'Income', icon: '↑', screen: 'AddMoney' },
-            { label: 'Expense', icon: '↓', screen: 'AddExpense' },
-            { label: 'Borrow', icon: '↗', screen: 'AddBorrow' },
-            { label: 'Repay', icon: '↙', screen: 'AddRepay' },
-          ].map(item => (
+          {/* Stats Grid */}
+          <View style={styles.statsGrid}>
+            <StatCard label="Total Income" value={balance.total_income} color="#34764A" />
+            <StatCard label="Total Expenses" value={balance.total_expenses} color="#B84C43" />
+            <StatCard label="Borrowed" value={balance.total_borrowed} color="#20231F" />
+            <StatCard label="Outstanding" value={balance.outstanding_debt} color="#B84C43" />
+          </View>
+
+          {/* Quick Actions */}
+          <Text style={styles.sectionTitle}>QUICK ACTIONS</Text>
+          <View style={styles.quickActions}>
+            {[
+              { label: 'Income', icon: '↑', screen: 'AddMoney' },
+              { label: 'Expense', icon: '↓', screen: 'AddExpense' },
+              { label: 'Borrow', icon: '↗', screen: 'AddBorrow' },
+              { label: 'Repay', icon: '↙', screen: 'AddRepay' },
+            ].map(item => (
+              <TouchableOpacity 
+                key={item.label} 
+                style={styles.actionButton}
+                onPress={() => navigation.navigate(item.screen)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.actionIcon}>{item.icon}</Text>
+                <Text style={styles.actionLabel}>{item.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Outstanding Debt Alert */}
+          {balance.outstanding_debt > 0 && (
             <TouchableOpacity 
-              key={item.label} 
-              style={styles.actionButton}
-              onPress={() => navigation.navigate(item.screen)}
+              style={styles.debtAlert}
+              onPress={() => navigation.navigate('AddRepay')}
               activeOpacity={0.7}
             >
-              <Text style={styles.actionIcon}>{item.icon}</Text>
-              <Text style={styles.actionLabel}>{item.label}</Text>
+              <View>
+                <Text style={styles.debtAlertLabel}>OUTSTANDING DEBT</Text>
+                <Text style={styles.debtAlertAmount}>{formatCurrency(balance.outstanding_debt)}</Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Recent Transactions */}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>RECENT</Text>
+            {transactions.length > 0 && (
+              <TouchableOpacity onPress={() => navigation.navigate('Transactions')} activeOpacity={0.7}>
+                <Text style={styles.viewAll}>View All</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {transactions.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>No transactions yet</Text>
+              <Text style={styles.emptySubtitle}>Add your first transaction to get started</Text>
+              <TouchableOpacity 
+                style={styles.emptyButton}
+                onPress={() => navigation.navigate('AddMoney')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.emptyButtonText}>Add Money</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.txList}>
+              {transactions.map(tx => (
+                <TxRow 
+                  key={tx.id} 
+                  tx={tx} 
+                  onPress={() => navigation.navigate('TransactionDetail', { txId: tx.id })} 
+                />
+              ))}
+            </View>
+          )}
+        </Animated.ScrollView>
+
+        {/* Bottom Tab Bar */}
+        <View style={styles.tabBar}>
+          {[
+            { label: 'Home', icon: '⌂', screen: 'Dashboard', active: true },
+            { label: 'History', icon: '☰', screen: 'Transactions' },
+            { label: 'Reports', icon: '◔', screen: 'Reports' },
+            { label: 'Settings', icon: '⚙', screen: 'Settings' },
+          ].map(tab => (
+            <TouchableOpacity 
+              key={tab.label} 
+              style={styles.tab}
+              onPress={() => navigation.navigate(tab.screen)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.tabIcon, tab.active && styles.tabIconActive]}>{tab.icon}</Text>
+              <Text style={[styles.tabLabel, tab.active && styles.tabLabelActive]}>{tab.label}</Text>
+              {tab.active && <View style={styles.tabIndicator} />}
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Outstanding Debt Alert */}
-        {balance.outstanding_debt > 0 && (
-          <TouchableOpacity 
-            style={styles.debtAlert}
-            onPress={() => navigation.navigate('AddRepay')}
-            activeOpacity={0.7}
-          >
-            <View>
-              <Text style={styles.debtAlertLabel}>OUTSTANDING DEBT</Text>
-              <Text style={styles.debtAlertAmount}>{formatCurrency(balance.outstanding_debt)}</Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Recent Transactions */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>RECENT</Text>
-          {transactions.length > 0 && (
-            <TouchableOpacity onPress={() => navigation.navigate('Transactions')}>
-              <Text style={styles.viewAll}>View All</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {transactions.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No transactions yet</Text>
-            <Text style={styles.emptySubtitle}>Add your first transaction to get started</Text>
-            <TouchableOpacity 
-              style={styles.emptyButton}
-              onPress={() => navigation.navigate('AddMoney')}
-            >
-              <Text style={styles.emptyButtonText}>Add Money</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.txList}>
-            {transactions.map(tx => (
-              <TouchableOpacity
-                key={tx.id}
-                style={styles.txRow}
-                onPress={() => navigation.navigate('TransactionDetail', { txId: tx.id })}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.txIcon, { backgroundColor: isOutgoing(tx.transaction_type) ? '#B84C4315' : '#34764A15' }]}>
-                  <Text style={[styles.txIconText, { color: isOutgoing(tx.transaction_type) ? '#B84C43' : '#34764A' }]}>
-                    {isOutgoing(tx.transaction_type) ? '↓' : '↑'}
-                  </Text>
-                </View>
-                <View style={styles.txInfo}>
-                  <Text style={styles.txDescription} numberOfLines={1}>{tx.description || getTxLabel(tx.transaction_type)}</Text>
-                  <Text style={styles.txMeta}>{getTxLabel(tx.transaction_type)} · {formatDate(tx.transaction_date)}</Text>
-                </View>
-                <Text style={[styles.txAmount, { color: isOutgoing(tx.transaction_type) ? '#B84C43' : '#34764A' }]}>
-                  {isOutgoing(tx.transaction_type) ? '-' : '+'}{formatCurrency(tx.amount)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </ScrollView>
-
-      {/* Bottom Tab Bar */}
-      <View style={styles.tabBar}>
-        {[
-          { label: 'Home', icon: '⌂', screen: 'Dashboard', active: true },
-          { label: 'History', icon: '☰', screen: 'Transactions' },
-          { label: 'Reports', icon: '◔', screen: 'Reports' },
-          { label: 'Settings', icon: '⚙', screen: 'Settings' },
-        ].map(tab => (
-          <TouchableOpacity 
-            key={tab.label} 
-            style={styles.tab}
-            onPress={() => navigation.navigate(tab.screen)}
-          >
-            <Text style={[styles.tabIcon, tab.active && styles.tabIconActive]}>{tab.icon}</Text>
-            <Text style={[styles.tabLabel, tab.active && styles.tabLabelActive]}>{tab.label}</Text>
-            {tab.active && <View style={styles.tabIndicator} />}
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* FAB */}
-      <TouchableOpacity 
-        style={styles.fab}
-        onPress={() => navigation.navigate('AddMoney')}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+        {/* FAB */}
+        <TouchableOpacity 
+          style={styles.fab}
+          onPress={() => navigation.navigate('AddMoney')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.fabText}>+</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    </View>
   );
 }
 
+const statStyles = StyleSheet.create({
+  card: { flex: 1, minWidth: '45%', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E4E5DF', padding: 14 },
+  label: { fontSize: 10, color: '#777B75', letterSpacing: 0.5, marginBottom: 4 },
+  value: { fontSize: 16, fontWeight: 'bold', color: '#20231F', fontVariant: ['tabular-nums'] },
+});
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F7F7F3' },
+  statusBarOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: Platform.OS === 'ios' ? 44 : 25,
+    backgroundColor: 'rgba(32, 35, 31, 0.85)',
+    zIndex: 999,
+  },
+  safeArea: { flex: 1 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
   greeting: { fontSize: 14, color: '#777B75' },
   date: { fontSize: 12, color: '#777B75', marginTop: 2 },
@@ -230,9 +266,6 @@ const styles = StyleSheet.create({
   eyeIcon: { fontSize: 16 },
   balanceAmount: { fontSize: 32, fontWeight: 'bold', color: '#20231F', fontVariant: ['tabular-nums'] },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: 20, gap: 12, marginBottom: 20 },
-  statCard: { flex: 1, minWidth: '45%', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E4E5DF', padding: 14 },
-  statLabel: { fontSize: 10, color: '#777B75', letterSpacing: 0.5, marginBottom: 4 },
-  statValue: { fontSize: 16, fontWeight: 'bold', color: '#20231F', fontVariant: ['tabular-nums'] },
   sectionTitle: { fontSize: 10, fontWeight: '500', color: '#777B75', letterSpacing: 1, paddingHorizontal: 20, marginBottom: 12 },
   quickActions: { flexDirection: 'row', marginHorizontal: 20, gap: 8, marginBottom: 20 },
   actionButton: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E4E5DF', paddingVertical: 14, alignItems: 'center' },

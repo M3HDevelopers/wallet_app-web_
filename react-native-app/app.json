@@ -14,14 +14,22 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.walletmanager.app"
+      "bundleIdentifier": "com.walletmanager.app",
+      "infoPlist": {
+        "UIStatusBarStyle": "UIStatusBarStyleLightContent"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F7F7F3"
       },
-      "package": "com.walletmanager.app"
+      "package": "com.walletmanager.app",
+      "statusBar": {
+        "barStyle": "light-content",
+        "backgroundColor": "#20231F",
+        "translucent": true
+      }
     },
     "plugins": [
       "expo-secure-store"

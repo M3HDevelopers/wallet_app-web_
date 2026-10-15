@@ -12,19 +12,11 @@ export default function SettingsScreen({ navigation, onLock }: any) {
   }, []);
 
   React.useEffect(() => {
-    if (settings.hide_balance === 'true') {
-      Animated.timing(toggleAnimation, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: false,
-      }).start();
-    } else {
-      Animated.timing(toggleAnimation, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: false,
-      }).start();
-    }
+    Animated.timing(toggleAnimation, {
+      toValue: settings.hide_balance === 'true' ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true, // Use native driver for better performance
+    }).start();
   }, [settings.hide_balance]);
 
   const loadSettings = async () => {
@@ -57,10 +49,8 @@ export default function SettingsScreen({ navigation, onLock }: any) {
     outputRange: [2, 22],
   });
 
-  const backgroundColor = toggleAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#E4E5DF', '#376B4B'],
-  });
+  // For backgroundColor, we need to use state since native driver doesn't support color interpolation
+  const toggleBgColor = settings.hide_balance === 'true' ? '#376B4B' : '#E4E5DF';
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -84,12 +74,12 @@ export default function SettingsScreen({ navigation, onLock }: any) {
               <Text style={styles.chevron}>›</Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.row} onPress={toggleHideBalance}>
+          <TouchableOpacity style={styles.row} onPress={toggleHideBalance} activeOpacity={0.7}>
             <Text style={styles.rowIcon}>🙈</Text>
             <Text style={styles.rowLabel}>Hide Balance</Text>
-            <Animated.View style={[styles.toggle, { backgroundColor }]}>
+            <View style={[styles.toggle, { backgroundColor: toggleBgColor }]}>
               <Animated.View style={[styles.toggleKnob, { transform: [{ translateX }] }]} />
-            </Animated.View>
+            </View>
           </TouchableOpacity>
         </View>
 

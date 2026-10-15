@@ -1,10 +1,23 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { calculateBalance, getCategories, getTransactions } from '../db/database';
 import { formatCurrency } from '../utils/currency';
 import { getToday, getMonthStart, getMonthEnd } from '../utils/date';
+
+// Memoized category row
+const CategoryRow = React.memo(({ cat, maxCat }: { cat: any; maxCat: number }) => (
+  <View style={styles.breakdownRow}>
+    <View style={styles.breakdownHeader}>
+      <Text style={styles.breakdownName}>{cat.category_name}</Text>
+      <Text style={styles.breakdownAmount}>{formatCurrency(cat.total)}</Text>
+    </View>
+    <View style={styles.barBg}>
+      <View style={[styles.barFill, { width: `${(cat.total / maxCat) * 100}%` }]} />
+    </View>
+  </View>
+));
 
 export default function ReportsScreen({ navigation }: any) {
   const [period, setPeriod] = useState<'daily' | 'monthly'>('monthly');
@@ -20,14 +33,33 @@ export default function ReportsScreen({ navigation }: any) {
     const endDate = period === 'daily' ? getToday() : getMonthEnd(selectedMonth.year, selectedMonth.month);
     
     const txs = await getTransactions();
-    const filtered = txs.filter(t => t.transaction_date >= startDate && t.transaction_date <= endDate);
     
-    const moneyReceived = filtered.filter(t => ['gift_allowance', 'family_money', 'person_money', 'other_income'].includes(t.transaction_type)).reduce((s, t) => s + t.amount, 0);
-    const earnedIncome = filtered.filter(t => t.transaction_type === 'earned_income').reduce((s, t) => s + t.amount, 0);
-    const totalExpenses = filtered.filter(t => t.transaction_type === 'expense').reduce((s, t) => s + t.amount, 0);
-    const borrowedFunds = filtered.filter(t => t.transaction_type === 'borrowed_money').reduce((s, t) => s + t.amount, 0);
-    const cashIn = filtered.filter(t => ['earned_income', 'gift_allowance', 'family_money', 'person_money', 'borrowed_money', 'loan_repayment_received', 'other_income'].includes(t.transaction_type)).reduce((s, t) => s + t.amount, 0);
-    const cashOut = filtered.filter(t => ['expense', 'repayment'].includes(t.transaction_type)).reduce((s, t) => s + t.amount, 0);
+    // Single pass through transactions for better performance
+    let moneyReceived = 0, earnedIncome = 0, totalExpenses = 0, borrowedFunds = 0, cashIn = 0, cashOut = 0;
+    const catMap: Record<string, number> = {};
+    
+    for (const t of txs) {
+      if (t.transaction_date < startDate || t.transaction_date > endDate) continue;
+      
+      const type = t.transaction_type;
+      if (type === 'earned_income') {
+        earnedIncome += t.amount;
+        cashIn += t.amount;
+      } else if (['gift_allowance', 'family_money', 'person_money', 'other_income'].includes(type)) {
+        moneyReceived += t.amount;
+        cashIn += t.amount;
+      } else if (type === 'borrowed_money') {
+        borrowedFunds += t.amount;
+        cashIn += t.amount;
+      } else if (type === 'expense') {
+        totalExpenses += t.amount;
+        cashOut += t.amount;
+        const catId = t.category_id || 'uncategorized';
+        catMap[catId] = (catMap[catId] || 0) + t.amount;
+      } else if (type === 'repayment') {
+        cashOut += t.amount;
+      }
+    }
     
     setSummary({
       money_received: moneyReceived,
@@ -38,13 +70,6 @@ export default function ReportsScreen({ navigation }: any) {
     });
 
     // Category breakdown
-    const expenses = filtered.filter(t => t.transaction_type === 'expense');
-    const catMap: Record<string, number> = {};
-    for (const tx of expenses) {
-      const catId = tx.category_id || 'uncategorized';
-      catMap[catId] = (catMap[catId] || 0) + tx.amount;
-    }
-    
     const categories = await getCategories();
     const breakdownData = Object.entries(catMap).map(([catId, total]) => {
       const cat = categories.find((c: any) => c.id === catId);
@@ -55,6 +80,9 @@ export default function ReportsScreen({ navigation }: any) {
   }, [period, selectedMonth]);
 
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+  
+  // Memoize maxCat calculation
+  const maxCat = useMemo(() => breakdown.length > 0 ? breakdown[0].total : 1, [breakdown]);
 
   const navigateMonth = (dir: number) => {
     setSelectedMonth(prev => {
@@ -67,7 +95,6 @@ export default function ReportsScreen({ navigation }: any) {
   };
 
   const monthLabel = new Date(selectedMonth.year, selectedMonth.month - 1).toLocaleDateString('en-PK', { month: 'long', year: 'numeric' });
-  const maxCat = breakdown.length > 0 ? breakdown[0].total : 1;
 
   if (!summary) return null;
 
@@ -120,15 +147,7 @@ export default function ReportsScreen({ navigation }: any) {
         ) : (
           <View style={styles.breakdownList}>
             {breakdown.map(cat => (
-              <View key={cat.category_id} style={styles.breakdownRow}>
-                <View style={styles.breakdownHeader}>
-                  <Text style={styles.breakdownName}>{cat.category_name}</Text>
-                  <Text style={styles.breakdownAmount}>{formatCurrency(cat.total)}</Text>
-                </View>
-                <View style={styles.barBg}>
-                  <View style={[styles.barFill, { width: `${(cat.total / maxCat) * 100}%` }]} />
-                </View>
-              </View>
+              <CategoryRow key={cat.category_id} cat={cat} maxCat={maxCat} />
             ))}
           </View>
         )}

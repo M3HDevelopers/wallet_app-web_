@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { View, StatusBar as RNStatusBar, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -57,8 +58,18 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
+        {/* Global Status Bar Overlay - Dark background for visibility */}
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: Platform.OS === 'ios' ? 44 : 30,
+          backgroundColor: 'rgba(32, 35, 31, 0.85)',
+          zIndex: 9999,
+        }} />
         <NavigationContainer>
-          <StatusBar style="dark" />
+          <StatusBar style="light" />
           <Stack.Navigator
             initialRouteName={initialScreen}
             screenOptions={{

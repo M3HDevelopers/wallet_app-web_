@@ -1,10 +1,45 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { searchTransactions } from '../db/database';
 import { formatCurrency } from '../utils/currency';
 import { formatDate } from '../utils/date';
+
+// Memoized transaction row component
+const TxRow = React.memo(({ item, navigation }: { item: any; navigation: any }) => {
+  const isOutgoing = item.transaction_type === 'expense' || item.transaction_type === 'repayment';
+  
+  const getTxLabel = (type: string) => {
+    const map: Record<string, string> = {
+      earned_income: 'Earned', gift_allowance: 'Gift', family_money: 'Family',
+      person_money: 'Received', borrowed_money: 'Borrowed', expense: 'Expense',
+      repayment: 'Repaid', other_income: 'Other', loan_repayment_received: 'Loan Repaid',
+    };
+    return map[type] || 'Tx';
+  };
+
+  return (
+    <TouchableOpacity
+      style={styles.txRow}
+      onPress={() => navigation.navigate('TransactionDetail', { txId: item.id })}
+      activeOpacity={0.7}
+    >
+      <View style={[styles.txIcon, { backgroundColor: isOutgoing ? '#B84C4315' : '#34764A15' }]}>
+        <Text style={[styles.txIconText, { color: isOutgoing ? '#B84C43' : '#34764A' }]}>
+          {isOutgoing ? '↓' : '↑'}
+        </Text>
+      </View>
+      <View style={styles.txInfo}>
+        <Text style={styles.txDescription} numberOfLines={1}>{item.description || getTxLabel(item.transaction_type)}</Text>
+        <Text style={styles.txMeta}>{getTxLabel(item.transaction_type)} · {formatDate(item.transaction_date)}</Text>
+      </View>
+      <Text style={[styles.txAmount, { color: isOutgoing ? '#B84C43' : '#34764A' }]}>
+        {isOutgoing ? '-' : '+'}{formatCurrency(item.amount)}
+      </Text>
+    </TouchableOpacity>
+  );
+});
 
 export default function TransactionsScreen({ navigation }: any) {
   const [query, setQuery] = useState('');
@@ -18,37 +53,13 @@ export default function TransactionsScreen({ navigation }: any) {
 
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
-  const isOutgoing = (type: string) => type === 'expense' || type === 'repayment';
+  // Memoize the render function
+  const renderTx = useCallback(({ item }: { item: any }) => (
+    <TxRow item={item} navigation={navigation} />
+  ), [navigation]);
 
-  const getTxLabel = (type: string) => {
-    const map: Record<string, string> = {
-      earned_income: 'Earned', gift_allowance: 'Gift', family_money: 'Family',
-      person_money: 'Received', borrowed_money: 'Borrowed', expense: 'Expense',
-      repayment: 'Repaid', other_income: 'Other', loan_repayment_received: 'Loan Repaid',
-    };
-    return map[type] || 'Tx';
-  };
-
-  const renderTx = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={styles.txRow}
-      onPress={() => navigation.navigate('TransactionDetail', { txId: item.id })}
-      activeOpacity={0.7}
-    >
-      <View style={[styles.txIcon, { backgroundColor: isOutgoing(item.transaction_type) ? '#B84C4315' : '#34764A15' }]}>
-        <Text style={[styles.txIconText, { color: isOutgoing(item.transaction_type) ? '#B84C43' : '#34764A' }]}>
-          {isOutgoing(item.transaction_type) ? '↓' : '↑'}
-        </Text>
-      </View>
-      <View style={styles.txInfo}>
-        <Text style={styles.txDescription} numberOfLines={1}>{item.description || getTxLabel(item.transaction_type)}</Text>
-        <Text style={styles.txMeta}>{getTxLabel(item.transaction_type)} · {formatDate(item.transaction_date)}</Text>
-      </View>
-      <Text style={[styles.txAmount, { color: isOutgoing(item.transaction_type) ? '#B84C43' : '#34764A' }]}>
-        {isOutgoing(item.transaction_type) ? '-' : '+'}{formatCurrency(item.amount)}
-      </Text>
-    </TouchableOpacity>
-  );
+  // Memoize key extractor
+  const keyExtractor = useCallback((item: any) => item.id, []);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -100,9 +111,14 @@ export default function TransactionsScreen({ navigation }: any) {
       ) : (
         <FlatList
           data={transactions}
-          keyExtractor={item => item.id}
+          keyExtractor={keyExtractor}
           renderItem={renderTx}
           contentContainerStyle={{ paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          initialNumToRender={10}
         />
       )}
 
