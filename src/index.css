@@ -1,1 +1,90 @@
 @import "tailwindcss";
+
+@theme {
+  --color-bg: #F7F7F3;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #20231F;
+  --color-text-secondary: #777B75;
+  --color-accent: #376B4B;
+  --color-income: #34764A;
+  --color-expense: #B84C43;
+  --color-border: #E4E5DF;
+  --color-surface-secondary: #EFEFE9;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  background-color: #F7F7F3;
+  color: #20231F;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input, textarea, select {
+  font-size: 16px !important;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+/* Number input styling */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Safe area padding */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
