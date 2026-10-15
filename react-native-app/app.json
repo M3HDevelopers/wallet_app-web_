@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Wallet Manager",
+    "slug": "wallet-manager",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F7F7F3"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.walletmanager.app",
+      "infoPlist": {
+        "UIStatusBarStyle": "UIStatusBarStyleLightContent"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F7F7F3"
+      },
+      "package": "com.walletmanager.app",
+      "statusBar": {
+        "barStyle": "light-content",
+        "backgroundColor": "#20231F",
+        "translucent": true
+      }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
+  }
+}
