@@ -149,8 +149,8 @@ export default function DashboardScreen({ navigation, onLock }: any) {
 
         {transactions.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>Koi transaction nahi</Text>
-            <Text style={styles.emptySubtitle}>Pehla transaction add karein</Text>
+            <Text style={styles.emptyTitle}>No transactions yet</Text>
+            <Text style={styles.emptySubtitle}>Add your first transaction to get started</Text>
             <TouchableOpacity 
               style={styles.emptyButton}
               onPress={() => navigation.navigate('AddMoney')}

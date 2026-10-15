@@ -116,7 +116,7 @@ export default function ReportsScreen({ navigation }: any) {
         {/* Category Breakdown */}
         <Text style={styles.sectionTitle}>EXPENSE BREAKDOWN</Text>
         {breakdown.length === 0 ? (
-          <View style={styles.emptyCard}><Text style={styles.emptyText}>Koi expense nahi</Text></View>
+          <View style={styles.emptyCard}><Text style={styles.emptyText}>No expenses in this period</Text></View>
         ) : (
           <View style={styles.breakdownList}>
             {breakdown.map(cat => (

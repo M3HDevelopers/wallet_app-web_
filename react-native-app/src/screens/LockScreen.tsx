@@ -18,7 +18,7 @@ export default function LockScreen({ navigation, onUnlock }: any) {
       if (pin === settings.pin) {
         onUnlock();
       } else {
-        setError('Galat PIN');
+        setError('Incorrect PIN');
         setPin('');
       }
       return;
@@ -28,7 +28,7 @@ export default function LockScreen({ navigation, onUnlock }: any) {
     if (valid) {
       onUnlock();
     } else {
-      setError('Galat password');
+      setError('Incorrect password');
       setPassword('');
     }
   };
@@ -41,7 +41,7 @@ export default function LockScreen({ navigation, onUnlock }: any) {
         </View>
         <Text style={styles.title}>Wallet Locked</Text>
         <Text style={styles.subtitle}>
-          {usePin ? 'PIN enter karein' : 'Password enter karein'}
+          {usePin ? 'Enter your PIN' : 'Enter your password'}
         </Text>
 
         {usePin ? (
@@ -76,7 +76,7 @@ export default function LockScreen({ navigation, onUnlock }: any) {
 
         <TouchableOpacity onPress={() => { setUsePin(!usePin); setError(''); setPassword(''); setPin(''); }}>
           <Text style={styles.switchText}>
-            {usePin ? 'Password use karein' : 'PIN use karein'}
+            {usePin ? 'Use password instead' : 'Use PIN instead'}
           </Text>
         </TouchableOpacity>
       </View>

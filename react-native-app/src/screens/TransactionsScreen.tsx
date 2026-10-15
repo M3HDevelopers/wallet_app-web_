@@ -95,7 +95,7 @@ export default function TransactionsScreen({ navigation }: any) {
       {/* List */}
       {transactions.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>Koi transaction nahi mila</Text>
+          <Text style={styles.emptyText}>No transactions found</Text>
         </View>
       ) : (
         <FlatList

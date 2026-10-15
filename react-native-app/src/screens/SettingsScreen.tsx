@@ -1,14 +1,31 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getSettings, updateSetting, resetAllData } from '../db/database';
 
 export default function SettingsScreen({ navigation, onLock }: any) {
   const [settings, setSettings] = useState<any>({});
+  const toggleAnimation = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
     loadSettings();
   }, []);
+
+  React.useEffect(() => {
+    if (settings.hide_balance === 'true') {
+      Animated.timing(toggleAnimation, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    } else {
+      Animated.timing(toggleAnimation, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [settings.hide_balance]);
 
   const loadSettings = async () => {
     const s = await getSettings();
@@ -24,16 +41,26 @@ export default function SettingsScreen({ navigation, onLock }: any) {
   const handleReset = () => {
     Alert.alert(
       'Reset All Data',
-      'Saara data delete ho jayega. Yeh wapas nahi aayega. Backup zaroor banayein.',
+      'All data will be permanently deleted. This action cannot be undone. Make sure to create a backup first.',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Delete', style: 'destructive', onPress: async () => {
           await resetAllData();
-          Alert.alert('Done', 'Data reset ho gaya', [{ text: 'OK', onPress: () => onLock() }]);
+          Alert.alert('Done', 'All data has been reset', [{ text: 'OK', onPress: () => onLock() }]);
         }},
       ]
     );
   };
+
+  const translateX = toggleAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [2, 22],
+  });
+
+  const backgroundColor = toggleAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#E4E5DF', '#376B4B'],
+  });
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -60,15 +87,15 @@ export default function SettingsScreen({ navigation, onLock }: any) {
           <TouchableOpacity style={styles.row} onPress={toggleHideBalance}>
             <Text style={styles.rowIcon}>🙈</Text>
             <Text style={styles.rowLabel}>Hide Balance</Text>
-            <View style={[styles.toggle, settings.hide_balance === 'true' && styles.toggleActive]}>
-              <View style={[styles.toggleKnob, settings.hide_balance === 'true' && styles.toggleKnobActive]} />
-            </View>
+            <Animated.View style={[styles.toggle, { backgroundColor }]}>
+              <Animated.View style={[styles.toggleKnob, { transform: [{ translateX }] }]} />
+            </Animated.View>
           </TouchableOpacity>
         </View>
 
         <Text style={styles.sectionTitle}>DATA</Text>
         <View style={styles.section}>
-          <TouchableOpacity style={styles.row} onPress={() => Alert.alert('Export', 'Backup feature coming soon')}>
+          <TouchableOpacity style={styles.row} onPress={() => Alert.alert('Export', 'Backup export feature coming soon')}>
             <Text style={styles.rowIcon}>📤</Text>
             <Text style={styles.rowLabel}>Export Backup</Text>
             <Text style={styles.chevron}>›</Text>
@@ -122,10 +149,8 @@ const styles = StyleSheet.create({
   rowRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   rowValue: { fontSize: 12, color: '#777B75' },
   chevron: { fontSize: 18, color: '#777B75' },
-  toggle: { width: 44, height: 24, backgroundColor: '#E4E5DF', justifyContent: 'center', paddingHorizontal: 2 },
-  toggleActive: { backgroundColor: '#376B4B' },
-  toggleKnob: { width: 20, height: 20, backgroundColor: '#FFFFFF' },
-  toggleKnobActive: { alignSelf: 'flex-end' },
+  toggle: { width: 44, height: 24, borderRadius: 12, justifyContent: 'center', paddingHorizontal: 2 },
+  toggleKnob: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#FFFFFF' },
   lockButton: { marginHorizontal: 16, marginTop: 8, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E4E5DF', paddingVertical: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
   lockIcon: { fontSize: 14 },
   lockText: { fontSize: 14, fontWeight: '500', color: '#20231F' },

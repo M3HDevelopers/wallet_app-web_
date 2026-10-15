@@ -19,7 +19,7 @@ export default function SetupScreen({ navigation, onComplete }: any) {
       if (err) { setError(err); return; }
       setError(''); setStep(1);
     } else if (step === 1) {
-      if (password !== confirm) { setError('Password match nahi kar raha'); return; }
+      if (password !== confirm) { setError('Passwords do not match'); return; }
       setError(''); setStep(2);
     } else {
       try {
@@ -50,15 +50,15 @@ export default function SetupScreen({ navigation, onComplete }: any) {
         </View>
 
         <Text style={styles.stepTitle}>
-          {step === 0 && 'Password banayein'}
-          {step === 1 && 'Confirm karein'}
+          {step === 0 && 'Create Password'}
+          {step === 1 && 'Confirm Password'}
           {step === 2 && 'Opening Balance'}
         </Text>
         
         <Text style={styles.stepSubtitle}>
-          {step === 0 && 'Kam az kam 8 characters ka password'}
-          {step === 1 && 'Password dobara enter karein'}
-          {step === 2 && 'Abhi kitne paise hain? (Skip kar sakte hain)'}
+          {step === 0 && 'Minimum 8 characters required'}
+          {step === 1 && 'Re-enter your password'}
+          {step === 2 && 'How much money do you have now? (Optional)'}
         </Text>
 
         {step === 0 && (

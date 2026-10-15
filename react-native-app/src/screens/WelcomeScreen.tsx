@@ -11,14 +11,14 @@ export default function WelcomeScreen({ navigation }: any) {
         </View>
         <Text style={styles.title}>Wallet Manager</Text>
         <Text style={styles.subtitle}>
-          Apne paise, kharche, aur udhaar ko track karein. Saara data aapke device par safe hai.
+          Track your money, expenses, and debts. All data stays safe on your device.
         </Text>
         <TouchableOpacity 
           style={styles.button}
           onPress={() => navigation.navigate('Setup')}
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>Shuru Karein</Text>
+          <Text style={styles.buttonText}>Get Started</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

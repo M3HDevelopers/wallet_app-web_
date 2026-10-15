@@ -21,8 +21,8 @@ export function AddExpenseScreen({ navigation }: any) {
 
   const handleSave = async () => {
     const amt = parseAmountInput(amount);
-    if (!amt) { setError('Amount enter karein'); return; }
-    if (!categoryId) { setError('Category select karein'); return; }
+    if (!amt) { setError('Please enter an amount'); return; }
+    if (!categoryId) { setError('Please select a category'); return; }
     let personId: string | null = null;
     if (person.trim()) personId = await getOrCreatePerson(person.trim());
     const cat = categories.find(c => c.id === categoryId);
@@ -80,8 +80,8 @@ export function AddBorrowScreen({ navigation }: any) {
 
   const handleSave = async () => {
     const amt = parseAmountInput(amount);
-    if (!amt) { setError('Amount enter karein'); return; }
-    if (!person.trim()) { setError('Lender ka naam likhein'); return; }
+    if (!amt) { setError('Please enter an amount'); return; }
+    if (!person.trim()) { setError('Please enter lender name'); return; }
     const personId = await getOrCreatePerson(person.trim());
     const debtId = await addDebt(personId, amt, date, null, notes);
     await addTransaction({
@@ -108,7 +108,7 @@ export function AddBorrowScreen({ navigation }: any) {
           </View>
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <Text style={styles.label}>LENDER</Text>
-          <TextInput style={styles.input} value={person} onChangeText={setPerson} placeholder="Kis se udhaar liya?" />
+          <TextInput style={styles.input} value={person} onChangeText={setPerson} placeholder="Who did you borrow from?" />
           <Text style={styles.label}>DATE</Text>
           <TextInput style={styles.input} value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" />
           <Text style={styles.label}>NOTES</Text>
@@ -138,8 +138,8 @@ export function AddRepayScreen({ navigation }: any) {
 
   const handleSave = async () => {
     const amt = parseAmountInput(amount);
-    if (!amt) { setError('Amount enter karein'); return; }
-    if (!selectedDebt) { setError('Debt select karein'); return; }
+    if (!amt) { setError('Please enter an amount'); return; }
+    if (!selectedDebt) { setError('Please select a debt'); return; }
     const remaining = await getDebtRemaining(selectedDebt);
     if (amt > remaining) { setError(`Remaining: ${formatCurrency(remaining)}`); return; }
     const debt = await getDebtById(selectedDebt);
@@ -165,7 +165,7 @@ export function AddRepayScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={styles.content}>
           {debts.length === 0 ? (
-            <View style={{ padding: 32, alignItems: 'center' }}><Text style={{ color: '#777B75' }}>Koi outstanding debt nahi</Text></View>
+            <View style={{ padding: 32, alignItems: 'center' }}><Text style={{ color: '#777B75' }}>No outstanding debts</Text></View>
           ) : (
             <>
               <Text style={styles.label}>SELECT DEBT</Text>
@@ -209,7 +209,7 @@ export function TransactionDetailScreen({ navigation, route }: any) {
   const isOut = tx.transaction_type === 'expense' || tx.transaction_type === 'repayment';
 
   const handleDelete = () => {
-    Alert.alert('Delete?', 'Yeh transaction permanently delete ho jayegi.', [
+    Alert.alert('Delete Transaction', 'This transaction will be permanently deleted.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => { await deleteTransaction(txId); navigation.goBack(); } },
     ]);
@@ -274,7 +274,7 @@ export function EditTransactionScreen({ navigation, route }: any) {
 
   const handleSave = async () => {
     const amt = parseAmountInput(amount);
-    if (!amt) { setError('Amount enter karein'); return; }
+    if (!amt) { setError('Please enter an amount'); return; }
     await updateTransaction(txId, { amount: amt, transaction_date: date, description, notes });
     navigation.goBack();
   };
@@ -319,9 +319,9 @@ export function ChangePasswordScreen({ navigation }: any) {
     const { verifyPassword, createPasswordHash, getAuth, saveAuth } = await import('../db/database');
     const auth = await getAuth();
     const valid = await verifyPassword(current, auth.password_hash, auth.salt);
-    if (!valid) { setError('Current password galat hai'); return; }
-    if (newPass.length < 8) { setError('Min 8 characters'); return; }
-    if (newPass !== confirm) { setError('Passwords match nahi'); return; }
+    if (!valid) { setError('Current password is incorrect'); return; }
+    if (newPass.length < 8) { setError('Minimum 8 characters required'); return; }
+    if (newPass !== confirm) { setError('Passwords do not match'); return; }
     const { hash, salt } = await createPasswordHash(newPass);
     await saveAuth(hash, salt);
     navigation.goBack();
@@ -357,8 +357,8 @@ export function SetPinScreen({ navigation }: any) {
   const [error, setError] = useState('');
 
   const handleSave = async () => {
-    if (pin.length !== 4 && pin.length !== 6) { setError('PIN 4 or 6 digits hona chahiye'); return; }
-    if (pin !== confirm) { setError('PINs match nahi'); return; }
+    if (pin.length !== 4 && pin.length !== 6) { setError('PIN must be 4 or 6 digits'); return; }
+    if (pin !== confirm) { setError('PINs do not match'); return; }
     const { updateSetting } = await import('../db/database');
     await updateSetting('pin_enabled', 'true');
     await updateSetting('pin', pin);

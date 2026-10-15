@@ -35,7 +35,7 @@ export default function AddMoneyScreen({ navigation }: any) {
 
   const handleSave = async () => {
     const amt = parseAmountInput(amount);
-    if (!amt) { setError('Amount enter karein'); return; }
+    if (!amt) { setError('Please enter an amount'); return; }
 
     let personId: string | null = null;
     if (person.trim()) {
